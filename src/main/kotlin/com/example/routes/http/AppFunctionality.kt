@@ -1,0 +1,72 @@
+package com.example.routes.http
+
+import com.example.database.*
+import com.example.models.requests.FavoriteMovieRequest
+import com.example.models.responses.BasicApiResponse
+import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.OK
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+
+
+fun Route.getFavoriteMovies() {
+    get("/getFavoriteMovies") {
+        val username = call.parameters["accountUsername"]
+        if(username == null) {
+            call.respond(HttpStatusCode.BadRequest, "Bad request format")
+            return@get
+        }
+
+        if(!checkIfUserExists(username)) {
+            call.respond(HttpStatusCode.BadRequest, "The user does not exist")
+            return@get
+        }
+
+        call.respond(OK, getFavoriteMovies(username))
+    }
+}
+
+fun Route.addMovieToFavourites() {
+    post("/addMovieToFavorites") {
+        val request = call.receiveOrNull<FavoriteMovieRequest>()
+        if(request == null) {
+            call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "Bad request format"))
+            return@post
+        }
+        if(!checkIfUserExists(request.accountUsername)) {
+            call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "The username trying to add this job to favourites does not exist"))
+            return@post
+        }
+
+        if(request.movieEntity.id in findUser(request.accountUsername)!!.favoriteMovies) {
+            call.respond(HttpStatusCode.OK, BasicApiResponse(false, "You already saved this movie"))
+        } else {
+            saveMovie(request.movieEntity)
+            addMovieToFavorites(request.accountUsername, request.movieEntity.id)
+            call.respond(HttpStatusCode.OK, BasicApiResponse(true, "The movie has been saved successfully"))
+        }
+    }
+}
+
+fun Route.deleteMovieFromFavorites() {
+    post("/deleteMovieFromFavorites") {
+        val request = call.receiveOrNull<FavoriteMovieRequest>()
+        if(request == null) {
+            call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "Bad request format"))
+            return@post
+        }
+        if(!checkIfUserExists(request.accountUsername)) {
+            call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "The username trying to add this job to favourites does not exist"))
+            return@post
+        }
+
+        if(request.movieEntity.id !in findUser(request.accountUsername)!!.favoriteMovies) {
+            call.respond(HttpStatusCode.OK, BasicApiResponse(false, "You don't have this movie as a favorite"))
+        } else {
+            removeMovieFromFavorites(request.accountUsername, request.movieEntity.id)
+            call.respond(HttpStatusCode.OK, BasicApiResponse(true, "The movie has been deleted successfully"))
+        }
+    }
+}
