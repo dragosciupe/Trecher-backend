@@ -52,13 +52,13 @@ fun Route.addMovieToFavourites() {
 
 fun Route.deleteMovieFromFavorites() {
     post("/deleteMovieFromFavorites") {
-        val request = call.receiveOrNull<FavoriteMovieRequest>()
+        val request = call.receiveNullable<FavoriteMovieRequest>()
         if(request == null) {
             call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "Bad request format"))
             return@post
         }
         if(!checkIfUserExists(request.accountUsername)) {
-            call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "The username trying to add this job to favourites does not exist"))
+            call.respond(HttpStatusCode.BadRequest, BasicApiResponse(false, "The username trying to add this movie to favourites does not exist"))
             return@post
         }
 

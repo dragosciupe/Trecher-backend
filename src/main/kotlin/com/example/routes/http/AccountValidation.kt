@@ -65,7 +65,7 @@ fun Route.loginAccount() {
         if(loginUser(username, password)) {
             call.respond(HttpStatusCode.OK, BasicApiResponse(true, "Account successfully logged in"))
         } else {
-            call.respond(HttpStatusCode.OK, BasicApiResponse(false, "Username or password do not match"))
+            call.respond(HttpStatusCode.OK, BasicApiResponse(false, "You entered a wrong password"))
         }
     }
 }
