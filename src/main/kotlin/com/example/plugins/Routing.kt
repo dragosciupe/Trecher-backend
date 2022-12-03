@@ -14,5 +14,7 @@ fun Application.configureRouting() {
         getFavoriteMovies()
         addMovieToFavourites()
         deleteMovieFromFavorites()
+        addMovieReview()
+        getReviewsForMovie()
     }
 }

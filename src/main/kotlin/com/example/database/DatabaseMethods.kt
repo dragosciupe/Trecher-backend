@@ -1,13 +1,27 @@
 package com.example.database
 
 import com.example.models.regular.MovieItem
+import com.example.models.regular.Review
 import com.example.models.regular.User
+import com.example.models.requests.ReviewRequest
+import com.example.models.responses.ReviewResponse
 import com.example.security.checkHashForPassword
 import org.litote.kmongo.*
+import java.sql.Timestamp
+import java.time.Instant.now
 import java.util.*
 
 suspend fun findUser(username: String): User? {
     return users.findOne(User::username eq username)
+}
+
+suspend fun findUserById(userId: String): User? {
+    return users.findOneById(userId)
+}
+
+suspend fun getUserId(username: String): String? {
+    val user = findUser(username)
+    return user?.userId
 }
 
 suspend fun findMovie(movieId: Int): MovieItem? {
@@ -15,13 +29,12 @@ suspend fun findMovie(movieId: Int): MovieItem? {
 }
 
 suspend fun checkIfUserExists(username: String): Boolean {
-    val userToFind = users.findOne(User::username eq username)
-    return userToFind != null
+    return findUser(username) != null
 }
 
 suspend fun checkIfMovieExists(movieId: Int): Boolean {
-    val movieToFind = findMovie(movieId)
-    return movieToFind != null
+    println("Checking for movie: $movieId")
+    return findMovie(movieId) != null
 }
 
 suspend fun addUser(
@@ -52,6 +65,28 @@ suspend fun addMovieToFavorites(accountUsername: String, movieId: Int) {
     users.updateOneById(user.userId, modifiedUser)
 }
 
+suspend fun createReviewFromRequest(reviewRequest: ReviewRequest): Boolean {
+    if(!checkIfUserExists(reviewRequest.accountUsername)) return false
+
+    val reviewTimestamp = System.currentTimeMillis()
+    val reviewRating = if(reviewRequest.reviewRating < 1) 1
+                       else if(reviewRequest.reviewRating > 5) 5
+                       else reviewRequest.reviewRating
+
+    val newReview = Review(
+        UUID.randomUUID().toString(),
+        getUserId(reviewRequest.accountUsername)!!,
+        reviewRequest.movieId,
+        reviewRating,
+        reviewRequest.reviewMessage,
+        reviewTimestamp
+    )
+
+    return reviews.insertOne(newReview).wasAcknowledged()
+}
+
+
+
 suspend fun removeMovieFromFavorites(accountUsername: String, movieId: Int) {
     val user = findUser(accountUsername)!!
     val modifiedFavoriteMovies = user.favoriteMovies.toMutableList().apply {
@@ -77,4 +112,23 @@ suspend fun getFavoriteMovies(accountUsername: String): List<MovieItem> {
         }
     }
     return savedMoviesList
+}
+
+suspend fun getAllReviewsForMovie(movieId: Int): List<ReviewResponse> {
+    val reviewResponseList = mutableListOf<ReviewResponse>()
+    val reviews = reviews.find(Review::movieId eq movieId).toList()
+
+    reviews.forEach { review ->
+        reviewResponseList.add(
+            ReviewResponse(
+                findUserById(review.userId)!!.username,
+                review.movieId,
+                review.rating,
+                review.message,
+                review.timestamp
+            )
+        )
+    }
+
+    return reviewResponseList
 }
