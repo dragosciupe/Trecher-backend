@@ -33,7 +33,6 @@ suspend fun checkIfUserExists(username: String): Boolean {
 }
 
 suspend fun checkIfMovieExists(movieId: Int): Boolean {
-    println("Checking for movie: $movieId")
     return findMovie(movieId) != null
 }
 
@@ -68,18 +67,15 @@ suspend fun addMovieToFavorites(accountUsername: String, movieId: Int) {
 suspend fun createReviewFromRequest(reviewRequest: ReviewRequest): Boolean {
     if(!checkIfUserExists(reviewRequest.accountUsername)) return false
 
-    val reviewTimestamp = System.currentTimeMillis()
-    val reviewRating = if(reviewRequest.reviewRating < 1) 1
-                       else if(reviewRequest.reviewRating > 5) 5
-                       else reviewRequest.reviewRating
+    if(reviewRequest.reviewRating < 1 || reviewRequest.reviewRating > 5) return false
 
     val newReview = Review(
         UUID.randomUUID().toString(),
         getUserId(reviewRequest.accountUsername)!!,
         reviewRequest.movieId,
-        reviewRating,
+        reviewRequest.reviewRating,
         reviewRequest.reviewMessage,
-        reviewTimestamp
+        System.currentTimeMillis()
     )
 
     return reviews.insertOne(newReview).wasAcknowledged()
@@ -129,6 +125,5 @@ suspend fun getAllReviewsForMovie(movieId: Int): List<ReviewResponse> {
             )
         )
     }
-
     return reviewResponseList
 }

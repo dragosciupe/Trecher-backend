@@ -84,18 +84,8 @@ fun Route.addMovieReview() {
             return@post
         }
 
-        println(reviewRequest.accountUsername)
-        println(reviewRequest.movieId)
-        println(reviewRequest.reviewRating)
-        println(reviewRequest.reviewMessage)
-
         if (!checkIfUserExists(reviewRequest.accountUsername)) {
             call.respond(BadRequest, BasicApiResponse(false, "The user does not exist"))
-            return@post
-        }
-
-        if (!checkIfMovieExists(reviewRequest.movieId)) {
-            call.respond(BadRequest, BasicApiResponse(false, "The movie does not exist"))
             return@post
         }
 
@@ -112,11 +102,6 @@ fun Route.getReviewsForMovie() {
         val movieId = call.parameters["movieId"]
         if(movieId.isNullOrEmpty()) {
             call.respond(BadRequest, BasicApiResponse(false, "Bad request"))
-            return@get
-        }
-
-        if(!checkIfMovieExists(movieId.toInt())) {
-            call.respond(OK, BasicApiResponse(false, "Movie does not exist"))
             return@get
         }
 

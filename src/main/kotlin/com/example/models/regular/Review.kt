@@ -11,7 +11,7 @@ data class Review(
     val reviewId: String,
     val userId: String,
     val movieId: Int,
-    val rating: Int,
+    val rating: Double,
     val message: String,
     val timestamp: Long
 )
